@@ -1,0 +1,24 @@
+# Maven build artifacts
+target/
+*.class
+*.jar
+
+# IDE configuration
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Logs and profiling
+*.log
+*.hprof
+
+# System files
+.DS_Store
+.git/
+.gitignore
+
+# Maven cache
+.m2/
