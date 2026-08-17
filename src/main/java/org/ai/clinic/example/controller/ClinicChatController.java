@@ -3,7 +3,7 @@ package org.ai.clinic.example.controller;
 import org.ai.clinic.example.dto.AskResponse;
 import org.ai.clinic.example.dto.ChatCompletionRequest;
 import org.ai.clinic.example.dto.ChatCompletionResponse;
-import org.ai.clinic.example.service.AiProxyService;
+import org.ai.clinic.example.service.ClinicChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,45 +14,46 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/ai")
-public class AiController {
+@RequestMapping("/clinic")
+public class ClinicChatController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AiController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClinicChatController.class);
 
-    private final AiProxyService aiProxyService;
+    private final ClinicChatService clinicChatService;
 
-    public AiController(AiProxyService aiProxyService) {
-        this.aiProxyService = aiProxyService;
+    public ClinicChatController(ClinicChatService clinicChatService) {
+        this.clinicChatService = clinicChatService;
     }
 
     /**
-     * GET /ai/ask?query=My content
+     * GET /clinic/ask?query=When is Dr. Smith available this week?
      *
-     * <p>Passes the query to the AI proxy and returns the model answer.
+     * <p>Single-turn question, runs the full RAG pipeline and returns the model answer.
      */
     @GetMapping("/ask")
     public AskResponse ask(@RequestParam("query") String query) {
-        logger.info("Received AI query: {}", query);
-        ChatCompletionResponse response = aiProxyService.complete(ChatCompletionRequest.ofUserMessage(query));
+        logger.info("Received clinic query: {}", query);
+        ChatCompletionResponse response = clinicChatService.complete(ChatCompletionRequest.ofUserMessage(query));
         return new AskResponse(query, response.firstContent(), response.model());
     }
 
     /**
-     * GET /ai/ask/text?query=My content — plain text answer only.
+     * GET /clinic/ask/text?query=When is Dr. Smith available this week? — plain text answer only.
      */
     @GetMapping(value = "/ask/text", produces = "text/plain;charset=UTF-8")
     public String askText(@RequestParam("query") String query) {
-        logger.info("Received AI query (text): {}", query);
-        return aiProxyService.ask(query);
+        logger.info("Received clinic query (text): {}", query);
+        return clinicChatService.ask(query);
     }
 
     /**
-     * POST /ai/chat — pass a full messages payload through to the proxy.
+     * POST /clinic/chat — pass a full messages payload (conversation history) through
+     * the clinic RAG pipeline (SQL generation + policy lookup + final answer).
      */
     @PostMapping("/chat")
     public ChatCompletionResponse chat(@RequestBody ChatCompletionRequest request) {
-        logger.info("Received AI chat request with {} message(s)",
+        logger.info("Received clinic chat request with {} message(s)",
                 request.messages() == null ? 0 : request.messages().size());
-        return aiProxyService.complete(request);
+        return clinicChatService.complete(request);
     }
 }
