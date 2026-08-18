@@ -1,6 +1,7 @@
 package org.ai.clinic.example.config;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -21,10 +22,11 @@ public class AiProxyProperties {
 
     /** Base URL of the AI proxy, injected from {@code AI_PROXY_BASE_URL}. */
     @NotBlank(message = "ai-proxy.base-url must be set (environment variable AI_PROXY_BASE_URL)")
+    @Pattern(regexp = "https?://.+", message = "ai-proxy.base-url must be a valid HTTP(S) URL")
     private String baseUrl;
 
-    /** Deployment (model) name, e.g. {@code anthropic.claude-opus-5}. */
-    private String deployment = "anthropic.claude-opus-5";
+    /** Deployment (model) name, e.g. {@code anthropic.claude-v3-haiku}. */
+    private String deployment = "anthropic.claude-v3-haiku";
 
     /** Value sent in the {@code Api-Key} header. */
     private String apiKey;

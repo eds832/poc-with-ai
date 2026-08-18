@@ -1,28 +1,6 @@
-CLINIC POLICIES AND DOCTOR INFORMATION
-
-Dr. Emily Smith - Orthodontist
-15 years of experience. Specializes in Invisalign and traditional braces.
-Certified by the American Board of Orthodontics.
-
-Dr. Michael Johnson - Pediatric Dentist
-8 years of experience. Gentle approach for children.
-Specializes in early cavity prevention and dental education.
-
-Dr. Sarah Williams - Endodontist
-12 years of experience. Root canal specialist.
-Advanced training in microsurgical endodontics.
-
-Dr. David Brown - Periodontist
-20 years of experience. Expert in gum disease treatment and dental implants.
-Over 2000 successful implant procedures.
-
-Dr. Laura Davis - General Dentist
-6 years of experience. Focuses on preventive care, cleanings,
-and cosmetic dentistry including teeth whitening.
-
-Dr. Robert Wilson - Oral Surgeon
-18 years experience. Specializes in tooth extractions, wisdom teeth removal,
-and dental implant surgery. Over 3000 successful extractions performed.
+CLINIC POLICIES
 
 CLINIC HOURS: Monday-Friday 8:00 AM - 6:00 PM, Saturday 9:00 AM - 2:00 PM
 CANCELLATION POLICY: Please notify us at least 24 hours in advance.
+BOOKING: Appointments can be booked online, by phone.
+INFORMATION OF SLOTS IN DATABASE: only for the next 4 days.

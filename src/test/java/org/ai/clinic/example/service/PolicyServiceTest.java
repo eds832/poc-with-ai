@@ -1,26 +1,41 @@
 package org.ai.clinic.example.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+
+import javax.sql.DataSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PolicyServiceTest {
 
+    private PolicyService service;
+
+    @BeforeEach
+    void setUp() {
+        DataSource dataSource = new EmbeddedDatabaseBuilder()
+                .setType(EmbeddedDatabaseType.H2)
+                .addScript("schema.sql")
+                .addScript("data.sql")
+                .build();
+        service = new PolicyService(new JdbcTemplate(dataSource));
+    }
+
     @Test
     void loadsPolicyTextFromClasspath() {
-        PolicyService service = new PolicyService();
         String text = service.getPolicyText();
 
         assertFalse(text.isBlank());
         assertTrue(text.contains("CLINIC POLICIES"));
-        assertTrue(text.contains("Dr. Emily Smith"));
         assertTrue(text.contains("CANCELLATION POLICY"));
     }
 
     @Test
     void policyTextContainsAllDoctors() {
-        PolicyService service = new PolicyService();
         String text = service.getPolicyText();
 
         assertTrue(text.contains("Dr. Emily Smith"));
@@ -33,7 +48,6 @@ class PolicyServiceTest {
 
     @Test
     void policyTextContainsClinicHours() {
-        PolicyService service = new PolicyService();
         String text = service.getPolicyText();
 
         assertTrue(text.contains("Monday-Friday"));

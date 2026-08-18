@@ -1,5 +1,6 @@
 package org.ai.clinic.example.controller;
 
+import jakarta.validation.Valid;
 import org.ai.clinic.example.dto.AskResponse;
 import org.ai.clinic.example.dto.ChatCompletionRequest;
 import org.ai.clinic.example.dto.ChatCompletionResponse;
@@ -32,7 +33,7 @@ public class ClinicChatController {
      */
     @GetMapping("/ask")
     public AskResponse ask(@RequestParam("query") String query) {
-        logger.info("Received clinic query: {}", query);
+        logger.debug("Received clinic query: {}", query);
         ChatCompletionResponse response = clinicChatService.complete(ChatCompletionRequest.ofUserMessage(query));
         return new AskResponse(query, response.firstContent(), response.model());
     }
@@ -42,7 +43,7 @@ public class ClinicChatController {
      */
     @GetMapping(value = "/ask/text", produces = "text/plain;charset=UTF-8")
     public String askText(@RequestParam("query") String query) {
-        logger.info("Received clinic query (text): {}", query);
+        logger.debug("Received clinic query (text): {}", query);
         return clinicChatService.ask(query);
     }
 
@@ -51,7 +52,7 @@ public class ClinicChatController {
      * the clinic RAG pipeline (SQL generation + policy lookup + final answer).
      */
     @PostMapping("/chat")
-    public ChatCompletionResponse chat(@RequestBody ChatCompletionRequest request) {
+    public ChatCompletionResponse chat(@Valid @RequestBody ChatCompletionRequest request) {
         logger.info("Received clinic chat request with {} message(s)",
                 request.messages() == null ? 0 : request.messages().size());
         return clinicChatService.complete(request);

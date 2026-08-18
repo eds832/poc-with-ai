@@ -1,6 +1,7 @@
 package org.ai.clinic.example.service;
 
 import org.ai.clinic.example.repository.QueryExecutor;
+import org.ai.clinic.example.repository.QueryExecutor.QueryResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -32,13 +34,14 @@ class SqlQueryServiceTest {
 
     @Test
     void executeSelect_validSelect_delegatesToQueryExecutor() {
-        List<Map<String, Object>> expected = List.of(Map.of("NAME", "Dr. Smith"));
-        when(queryExecutor.execute("SELECT * FROM DOCTORS")).thenReturn(expected);
+        List<Map<String, Object>> rows = List.of(Map.of("NAME", "Dr. Smith"));
+        when(queryExecutor.execute("SELECT * FROM doctors")).thenReturn(new QueryResult(rows, false));
 
-        List<Map<String, Object>> result = service.executeSelect("SELECT * FROM doctors");
+        QueryResult result = service.executeSelect("SELECT * FROM doctors");
 
-        assertEquals(expected, result);
-        verify(queryExecutor).execute("SELECT * FROM DOCTORS");
+        assertEquals(rows, result.rows());
+        assertFalse(result.truncated());
+        verify(queryExecutor).execute("SELECT * FROM doctors");
     }
 
     @ParameterizedTest
@@ -81,38 +84,45 @@ class SqlQueryServiceTest {
     @Test
     void executeSelect_selectContainingDangerousSubstring_allowed() {
         // "CREATED_AT" contains "CREATE" as substring, but not as a word boundary — should pass
-        when(queryExecutor.execute(anyString())).thenReturn(List.of());
+        when(queryExecutor.execute(anyString())).thenReturn(new QueryResult(List.of(), false));
 
-        service.executeSelect("SELECT CREATED_AT FROM some_table");
+        service.executeSelect("SELECT CREATED_AT FROM doctors");
 
-        verify(queryExecutor).execute("SELECT CREATED_AT FROM SOME_TABLE");
+        verify(queryExecutor).execute("SELECT CREATED_AT FROM doctors");
+    }
+
+    @Test
+    void executeSelect_disallowedTable_throws() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.executeSelect("SELECT * FROM some_table"));
+        verify(queryExecutor, never()).execute(anyString());
     }
 
     @Test
     void executeSelect_stripsMarkdownFences() {
-        when(queryExecutor.execute(anyString())).thenReturn(List.of());
+        when(queryExecutor.execute(anyString())).thenReturn(new QueryResult(List.of(), false));
 
         service.executeSelect("```sql\nSELECT * FROM doctors\n```");
 
-        verify(queryExecutor).execute("SELECT * FROM DOCTORS");
+        verify(queryExecutor).execute("SELECT * FROM doctors");
     }
 
     @Test
     void executeSelect_stripsTrailingSemicolon() {
-        when(queryExecutor.execute(anyString())).thenReturn(List.of());
+        when(queryExecutor.execute(anyString())).thenReturn(new QueryResult(List.of(), false));
 
         service.executeSelect("SELECT * FROM doctors;");
 
-        verify(queryExecutor).execute("SELECT * FROM DOCTORS");
+        verify(queryExecutor).execute("SELECT * FROM doctors");
     }
 
     @Test
     void executeSelect_stripsMultipleTrailingSemicolons() {
-        when(queryExecutor.execute(anyString())).thenReturn(List.of());
+        when(queryExecutor.execute(anyString())).thenReturn(new QueryResult(List.of(), false));
 
         service.executeSelect("SELECT * FROM doctors;;;");
 
-        verify(queryExecutor).execute("SELECT * FROM DOCTORS");
+        verify(queryExecutor).execute("SELECT * FROM doctors");
     }
 
     @Test

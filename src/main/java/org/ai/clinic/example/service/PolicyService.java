@@ -1,19 +1,16 @@
 package org.ai.clinic.example.service;
 
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
-/**
- * Loads the static clinic policy text used as grounding context for the chat.
- *
- * <p>The file is read once at startup through an {@link InputStream} so it also works
- * when the application runs from a packaged JAR (where {@code getFile()} would fail).
- */
 @Service
 public class PolicyService {
 
@@ -21,8 +18,10 @@ public class PolicyService {
 
     private final String policyText;
 
-    public PolicyService() {
-        this.policyText = loadPolicyText();
+    public PolicyService(JdbcTemplate jdbcTemplate) {
+        String staticPolicy = loadPolicyText();
+        String doctorInfo = loadDoctorInfo(jdbcTemplate);
+        this.policyText = staticPolicy + "\n" + doctorInfo;
     }
 
     public String getPolicyText() {
@@ -36,5 +35,17 @@ public class PolicyService {
         } catch (IOException e) {
             throw new UncheckedIOException("Unable to load " + POLICY_RESOURCE + " from the classpath", e);
         }
+    }
+
+    private static String loadDoctorInfo(JdbcTemplate jdbcTemplate) {
+        List<Map<String, Object>> doctors = jdbcTemplate.queryForList(
+                "SELECT name, specialization, experience_years, description FROM doctors ORDER BY id");
+        StringBuilder sb = new StringBuilder("DOCTOR INFORMATION:\n");
+        for (Map<String, Object> doc : doctors) {
+            sb.append("\n%s - %s\n%d years of experience. %s\n".formatted(
+                    doc.get("NAME"), doc.get("SPECIALIZATION"),
+                    doc.get("EXPERIENCE_YEARS"), doc.get("DESCRIPTION")));
+        }
+        return sb.toString();
     }
 }

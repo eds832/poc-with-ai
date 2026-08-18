@@ -3,6 +3,7 @@ package org.ai.clinic.example.service;
 import org.ai.clinic.example.dto.ChatCompletionRequest;
 import org.ai.clinic.example.dto.ChatCompletionResponse;
 import org.ai.clinic.example.dto.ChatMessage;
+import org.ai.clinic.example.repository.QueryExecutor.QueryResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -60,13 +60,6 @@ class ClinicChatServiceTest {
     }
 
     @Test
-    void complete_noUserMessage_throws() {
-        ChatCompletionRequest request = new ChatCompletionRequest(
-                List.of(ChatMessage.system("system msg")), null, null);
-        assertThrows(IllegalArgumentException.class, () -> service.complete(request));
-    }
-
-    @Test
     void complete_noneResponse_skipsDbAndReturnsAnswer() {
         ChatCompletionResponse sqlResponse = responseWith("NONE");
         ChatCompletionResponse finalResponse = responseWith("Our clinic is open Mon-Fri 8-6.");
@@ -87,7 +80,7 @@ class ClinicChatServiceTest {
 
         when(aiProxyService.complete(any())).thenReturn(sqlResponse, finalResponse);
         when(sqlQueryService.executeSelect(any())).thenReturn(
-                List.of(Map.of("NAME", "Dr. Smith", "SPECIALIZATION", "Orthodontist")));
+                new QueryResult(List.of(Map.of("NAME", "Dr. Smith", "SPECIALIZATION", "Orthodontist")), false));
 
         ChatCompletionResponse result = service.complete(ChatCompletionRequest.ofUserMessage("Is Dr. Smith available?"));
 
@@ -109,7 +102,7 @@ class ClinicChatServiceTest {
         when(sqlQueryService.executeSelect("SELECT * FROM doctors"))
                 .thenThrow(new RuntimeException("Syntax error"));
         when(sqlQueryService.executeSelect("SELECT * FROM DOCTORS"))
-                .thenReturn(List.of(Map.of("NAME", "Dr. Smith")));
+                .thenReturn(new QueryResult(List.of(Map.of("NAME", "Dr. Smith")), false));
 
         ChatCompletionResponse result = service.complete(ChatCompletionRequest.ofUserMessage("List doctors"));
 
@@ -155,7 +148,7 @@ class ClinicChatServiceTest {
 
         when(aiProxyService.complete(any())).thenReturn(sqlResponse, emptyResponse);
 
-        assertThrows(IllegalStateException.class, () -> service.ask("Hello"));
+        assertThrows(AiProxyException.class, () -> service.ask("Hello"));
     }
 
     @Test
@@ -170,7 +163,7 @@ class ClinicChatServiceTest {
         ChatCompletionResponse finalResponse = responseWith("Dr. Williams is available.");
 
         when(aiProxyService.complete(any())).thenReturn(sqlResponse, finalResponse);
-        when(sqlQueryService.executeSelect(any())).thenReturn(List.of());
+        when(sqlQueryService.executeSelect(any())).thenReturn(new QueryResult(List.of(), false));
 
         ChatCompletionRequest request = new ChatCompletionRequest(messages, null, null);
         ChatCompletionResponse result = service.complete(request);

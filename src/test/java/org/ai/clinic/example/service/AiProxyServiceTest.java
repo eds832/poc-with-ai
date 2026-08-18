@@ -1,6 +1,8 @@
 package org.ai.clinic.example.service;
 
 import org.ai.clinic.example.config.AiProxyProperties;
+import org.ai.clinic.example.dto.ChatCompletionRequest;
+import org.ai.clinic.example.dto.ChatCompletionResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -22,7 +24,7 @@ class AiProxyServiceTest {
 
     private static final String BASE_URL = "https://ai-proxy.example.test";
     private static final String EXPECTED_URL =
-            BASE_URL + "/openai/deployments/anthropic.claude-opus-5/chat/completions";
+            BASE_URL + "/openai/deployments/anthropic.claude-v3-haiku/chat/completions";
 
     private MockRestServiceServer server;
     private AiProxyService service;
@@ -42,7 +44,7 @@ class AiProxyServiceTest {
     }
 
     @Test
-    void askSendsCurlEquivalentRequestAndReturnsContent() {
+    void completeSendsCurlEquivalentRequestAndReturnsResponse() {
         server.expect(requestTo(EXPECTED_URL))
                 .andExpect(method(org.springframework.http.HttpMethod.POST))
                 .andExpect(header("Api-Key", "my-api-key"))
@@ -59,13 +61,9 @@ class AiProxyServiceTest {
                         }
                         """, MediaType.APPLICATION_JSON));
 
-        assertEquals("Hello!", service.ask("My content"));
+        ChatCompletionResponse response = service.complete(ChatCompletionRequest.ofUserMessage("My content"));
+        assertEquals("Hello!", response.firstContent());
         server.verify();
-    }
-
-    @Test
-    void askRejectsBlankQuery() {
-        assertThrows(IllegalArgumentException.class, () -> service.ask("  "));
     }
 
     @Test
@@ -73,7 +71,8 @@ class AiProxyServiceTest {
         server.expect(requestTo(EXPECTED_URL))
                 .andRespond(withServerError().body("boom"));
 
-        AiProxyException e = assertThrows(AiProxyException.class, () -> service.ask("My content"));
+        AiProxyException e = assertThrows(AiProxyException.class,
+                () -> service.complete(ChatCompletionRequest.ofUserMessage("My content")));
         assertTrue(e.getMessage().contains("500"));
     }
 }

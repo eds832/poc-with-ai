@@ -1,9 +1,11 @@
 package org.ai.clinic.example.controller;
 
+import org.ai.clinic.example.repository.QueryExecutor.QueryResult;
 import org.ai.clinic.example.service.SqlQueryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -16,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DebugController.class)
+@ActiveProfiles("dev")
 class DebugControllerTest {
 
     @Autowired
@@ -27,8 +30,8 @@ class DebugControllerTest {
     @Test
     void debugDoctors_returnsDoctorList() throws Exception {
         when(sqlQueryService.executeSelect("SELECT * FROM doctors"))
-                .thenReturn(List.of(
-                        Map.of("ID", 1, "NAME", "Dr. Smith", "SPECIALIZATION", "Orthodontist")));
+                .thenReturn(new QueryResult(List.of(
+                        Map.of("ID", 1, "NAME", "Dr. Smith", "SPECIALIZATION", "Orthodontist")), false));
 
         mockMvc.perform(get("/debug/doctors"))
                 .andExpect(status().isOk())
@@ -39,8 +42,8 @@ class DebugControllerTest {
     @Test
     void debugSlots_returnsSlotList() throws Exception {
         when(sqlQueryService.executeSelect("SELECT * FROM slots"))
-                .thenReturn(List.of(
-                        Map.of("ID", 1, "DOCTOR_ID", 1, "IS_AVAILABLE", true)));
+                .thenReturn(new QueryResult(List.of(
+                        Map.of("ID", 1, "DOCTOR_ID", 1, "IS_AVAILABLE", true)), false));
 
         mockMvc.perform(get("/debug/slots"))
                 .andExpect(status().isOk())

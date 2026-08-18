@@ -1,12 +1,14 @@
 package org.ai.clinic.example.controller;
 
 import org.ai.clinic.example.service.SqlQueryService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
 
+@Profile("dev")
 @RestController
 public class DebugController {
 
@@ -16,19 +18,13 @@ public class DebugController {
         this.sqlQueryService = sqlQueryService;
     }
 
-    /**
-     * http://localhost:8080/debug/doctors
-     */
     @GetMapping("/debug/doctors")
     public List<Map<String, Object>> debugDoctors() {
-        return sqlQueryService.executeSelect("SELECT * FROM doctors");
+        return sqlQueryService.executeSelect("SELECT * FROM doctors").rows();
     }
 
-    /**
-     * http://localhost:8080/debug/slots
-     */
     @GetMapping("/debug/slots")
     public List<Map<String, Object>> debugSlots() {
-        return sqlQueryService.executeSelect("SELECT * FROM slots");
+        return sqlQueryService.executeSelect("SELECT * FROM slots").rows();
     }
 }

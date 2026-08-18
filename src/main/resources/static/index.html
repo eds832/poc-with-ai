@@ -373,7 +373,7 @@
     </div>
 
     <div class="chat-input-area">
-        <input type="text" id="userInput" placeholder="Type your question..." onkeydown="handleKeyPress(event)">
+        <input type="text" id="userInput" placeholder="Type your question..." maxlength="4000" onkeydown="handleKeyPress(event)">
         <button id="sendButton" onclick="sendMessage()">Send</button>
     </div>
 </div>
@@ -438,31 +438,48 @@
         if (el) el.remove();
     }
 
+    const MAX_MESSAGE_LENGTH = 4000;
+    const REQUEST_TIMEOUT_MS = 90000;
+    const MAX_HISTORY = 40;
+
     async function sendMessage() {
         const text = userInput.value.trim();
         if (!text) return;
+        if (text.length > MAX_MESSAGE_LENGTH) {
+            addMessageToUI('assistant', 'Message is too long. Please keep it under ' + MAX_MESSAGE_LENGTH + ' characters.', true);
+            return;
+        }
 
         suggestions.style.display = 'none';
         addMessageToUI('user', text);
         conversationHistory.push({ role: 'user', content: text });
+
+        // Truncate history to last N messages to avoid unbounded growth
+        if (conversationHistory.length > MAX_HISTORY) {
+            conversationHistory = conversationHistory.slice(-MAX_HISTORY);
+        }
 
         userInput.value = '';
         userInput.disabled = true;
         sendButton.disabled = true;
         showTypingIndicator();
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
         try {
             const response = await fetch(CHAT_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: conversationHistory })
+                body: JSON.stringify({ messages: conversationHistory }),
+                signal: controller.signal
             });
 
+            clearTimeout(timeout);
             removeTypingIndicator();
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error('Server error ' + response.status + ': ' + errorText);
+                throw new Error('Something went wrong. Please try again.');
             }
 
             const data = await response.json();
@@ -474,8 +491,14 @@
             conversationHistory.push({ role: 'assistant', content: answer });
 
         } catch (err) {
+            clearTimeout(timeout);
             removeTypingIndicator();
-            addMessageToUI('assistant', 'Error: ' + err.message, true);
+            // Roll back the failed user message from history
+            conversationHistory.pop();
+            const msg = err.name === 'AbortError'
+                ? 'Request timed out. Please try again.'
+                : 'Something went wrong. Please try again.';
+            addMessageToUI('assistant', msg, true);
             console.error(err);
         } finally {
             userInput.disabled = false;
