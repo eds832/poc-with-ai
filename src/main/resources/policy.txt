@@ -3,4 +3,4 @@ CLINIC POLICIES
 CLINIC HOURS: Monday-Friday 8:00 AM - 6:00 PM, Saturday 9:00 AM - 2:00 PM
 CANCELLATION POLICY: Please notify us at least 24 hours in advance.
 BOOKING: Appointments can be booked online, by phone.
-INFORMATION OF SLOTS IN DATABASE: only for the next 4 days.
+INFORMATION OF SLOTS IN DATABASE: only for today and the next six days, if a client requests information outside of these dates, please inform them that this information is unavailable and offer to request the information closer to the specified date.
